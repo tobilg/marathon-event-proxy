@@ -38,7 +38,7 @@ app.get("/stats", function(req, res) {
     } else {
         res.json({
             connectionCount: connectionCount
-        })
+        });
     }
 });
 
@@ -55,7 +55,7 @@ app.get("/showEndpoint", function (req, res) {
 // Start Express server
 var server = app.listen(config.application.port, config.application.host, function (err) {
     if(err) throw err;
-    logger.info("SSE server ready on http://" + config.application.host + ":" + config.application.port)
+    logger.info("SSE server ready on http://" + config.application.host + ":" + config.application.port);
 });
 
 // Start Server Sent Events server
@@ -71,7 +71,6 @@ sse.on("connection", function (connection) {
     var eventTypes = [];
 
     logger.info("New connection with id " + connectionId);
-    logger.info("Passed event_types are " + qs["event_types"]);
 
     if (qs && qs["event_types"] && qs["event_types"].length > 0) {
         if (qs["event_types"].indexOf(",") > -1) {
@@ -92,6 +91,8 @@ sse.on("connection", function (connection) {
     if (eventTypes.length === 0) {
         eventTypes = allowedEventTypes;
     }
+
+    logger.info("Used event_types are " + eventTypes.join(",") + " for connection with id " + connectionId);
 
     // Store connection in connectionCache
     connectionCache[connectionId] = {
