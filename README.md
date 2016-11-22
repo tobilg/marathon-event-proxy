@@ -6,6 +6,10 @@ It's useful to limit the number of sent events, which is achieved by filtering o
 
 Marathon by default doesn't have this capability (yet), but there's an [issue](https://github.com/mesosphere/marathon/issues/4637) on this topic. 
 
+## Status
+
+This project is considered as proof-of-concept, and `alpha` quality. 
+
 ## Configuration
 
 Environment variables can be used to configure the application:
@@ -24,9 +28,9 @@ Environment variables can be used to configure the application:
 
 If you want to access the Marathon event proxy application by using Mesos DNS, you should be able to access it with your client at `marathon-event-proxy.marathon.mesos:8888/events` (if your Marathon app name is `marathon-event-proxy`, the port is `8888` and you didn't change/set the `ENDPOINT` environment variable). Otherwise, the respective configurations have to be taken into account.
 
-You can now specify the list of event types (separated by commas) you want to receive for the connection application, by using the following if you're interested in `deployment_info` and `group_change_success` events:
+You can now specify the list of event types (separated by commas) you want to receive for the connection application. If you're interested in `deployment_info` and `group_change_success` events, you can solely receive these by issuing the following request with your SSE client:
 
-    marathon-event-proxy.marathon.mesos:8888/events?event_types=deployment_info,group_change_success
+    GET http://marathon-event-proxy.marathon.mesos:8888/events?event_types=deployment_info,group_change_success
 
 Have a look at the [Event Bus](https://mesosphere.github.io/marathon/docs/event-bus.html) docs to see the different event types possible.
 
@@ -78,7 +82,7 @@ The below configuration will start the application on port `8888` on a random ag
 
 ## API endpoints
 
-### Stats
+### GET /stats
 
 The application serves it statistics under the `GET /stats` endpoint. For each connection, there is an event count, as well as the total bytes sent:
 
@@ -106,10 +110,17 @@ The application serves it statistics under the `GET /stats` endpoint. For each c
 }
 ```
 
-### showEndpoint
+### GET /showEndpoint
 
 The actual proxy endpoint can be gathered by requesting `GET /showEndpoint`. 
 
-### Health
+### GET /health
 
 The health endpoint at `GET /health` can be used for health checking.
+
+## Roadmap
+
+The following topics are on the roadmap currently:
+
+* [] Reformat event object to create smaller payloads (probably either via [linq.js](https://www.npmjs.com/package/linq) or [json-path](https://www.npmjs.com/package/json-path)).
+* [] Filter on specific field values / ranges / etc.
