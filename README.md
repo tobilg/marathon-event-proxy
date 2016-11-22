@@ -122,5 +122,5 @@ The health endpoint at `GET /health` can be used for health checking.
 
 The following topics are on the roadmap currently:
 
-* [] Reformat event object to create smaller payloads (probably either via [linq.js](https://www.npmjs.com/package/linq) or [json-path](https://www.npmjs.com/package/json-path)).
-* [] Filter on specific field values / ranges / etc.
+ - [ ] Reformat event object to create smaller payloads (probably either via [linq.js](https://www.npmjs.com/package/linq) or [json-path](https://www.npmjs.com/package/json-path)).
+ - [ ] Filter on specific field values / ranges / etc.
