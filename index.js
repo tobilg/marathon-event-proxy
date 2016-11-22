@@ -52,7 +52,6 @@ app.get("/showEndpoint", function (req, res) {
     });
 });
 
-
 // Start Express server
 var server = app.listen(config.application.port, config.application.host, function (err) {
     if(err) throw err;
@@ -111,18 +110,10 @@ sse.on("connection", function (connection) {
 
     logger.info("Active connections: " + Object.getOwnPropertyNames(connectionCache).length);
 
-    var heartbeat = setInterval(function () {
-        connectionCache[connectionId].connection.send({
-            event: "heartbeat",
-            data: new Date().toTimeString()
-        })
-    }, 1000);
-
     connectionCache[connectionId].connection.on("close", function () {
-        logger.info("Main: Closing connection id " + connectionId);
-        clearInterval(heartbeat);
+        logger.info("Closing connection id " + connectionId);
         delete connectionCache[connectionId];
-        logger.info("Main: Active connections: " + Object.getOwnPropertyNames(connectionCache).length);
+        logger.info("Active connections: " + Object.getOwnPropertyNames(connectionCache).length);
     });
 });
 
