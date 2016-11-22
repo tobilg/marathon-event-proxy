@@ -4,7 +4,7 @@
   "description": "A proxy for Marathon Server-Sent Events. ",
   "main": "index.js",
   "dependencies": {
-    "eventsource": "^0.2.1",
+    "eventsource": "git+https://github.com/rgadbois/eventsource.git",
     "express": "^4.14.0",
     "linq": "^3.0.5",
     "sse": "0.0.6",
