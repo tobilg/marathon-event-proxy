@@ -2,7 +2,7 @@
 
 This project can act as a proxy for the [Server Sent Events endpoint](https://mesosphere.github.io/marathon/docs/generated/api.html#v2_events_get) of Marathon's [Event Bus](https://mesosphere.github.io/marathon/docs/event-bus.html).
   
-It's useful to limit the number of sent events, which is achieved by filtering only the requested event types per SSE connection. The events sent from Marathon can easily become quite large, especially for the `deployment_*` events, which subsequently imposes an unnecessary load both on Marahton and the receiving application, if the receiving application isn't normally interested in these types of events. 
+It's useful to limit the number of sent events, which is achieved by filtering only the requested event types per SSE connection. The events sent from Marathon can easily become quite large, especially for the `deployment_*` events, which subsequently imposes an unnecessary load both on Marathon and the receiving application, if the receiving application isn't normally interested in these types of events. 
 
 Marathon by default doesn't have this capability (yet), but there's an [issue](https://github.com/mesosphere/marathon/issues/4637) on this topic. 
 
