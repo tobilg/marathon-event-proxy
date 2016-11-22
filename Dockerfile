@@ -17,6 +17,7 @@ ADD . $APP_DIR
 # Update Alpine distro and install npm modules for the project
 RUN apk update && \
     apk upgrade && \
+    apk add git && \
     cd ${APP_DIR} && \
     npm set progress=false && \
     npm install --silent
