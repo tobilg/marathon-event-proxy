@@ -24,6 +24,12 @@ Environment variables can be used to configure the application:
 
 If you want to access the Marathon event proxy application by using Mesos DNS, you should be able to access it with your client at `marathon-event-proxy.marathon.mesos:8888/events` (if your Marathon app name is `marathon-event-proxy`, the port is `8888` and you didn't change/set the `ENDPOINT` environment variable). Otherwise, the respective configurations have to be taken into account.
 
+You can now specify the list of event types (separated by commas) you want to receive for the connection application, by using the following if you're interested in `deployment_info` and `group_change_success` events:
+
+    marathon-event-proxy.marathon.mesos:8888/events?event_types=deployment_info,group_change_success
+
+Have a look at the [Event Bus](https://mesosphere.github.io/marathon/docs/event-bus.html) docs to see the different event types possible.
+
 ### Marathon app definition
 
 The below configuration will start the application on port `8888` on a random agent. If you want to place the application on a specific agent, please use [Marathon's contraints](https://mesosphere.github.io/marathon/docs/constraints.html).
@@ -35,7 +41,8 @@ The below configuration will start the application on port `8888` on a random ag
         "type": "DOCKER",
         "docker": {
             "network": "HOST",
-            "image": "tobilg/marathon-event-proxy"
+            "image": "tobilg/marathon-event-proxy",
+            "forcePullImage": true
         }
     },
     "cpus": 0.2,
@@ -52,10 +59,20 @@ The below configuration will start the application on port `8888` on a random ag
             "maxConsecutiveFailures": 3
         }
     ],
-    "ports": [
-        8888
+    "portDefinitions": [
+        {
+            "protocol": "tcp",
+            "port": 8888
+        }
     ],
-    "requirePorts" : true
+    "requirePorts" : true,
+    "labels":{
+        "MARATHON_SINGLE_INSTANCE_APP": "true"
+    },
+    "upgradeStrategy":{
+        "minimumHealthCapacity": 0,
+        "maximumOverCapacity": 0
+    }
 }
 ```
 
