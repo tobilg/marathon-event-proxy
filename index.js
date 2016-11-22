@@ -6,34 +6,73 @@ var crypto = require("crypto");
 var parse = require("url").parse;
 
 // The Marathon Event Listener
-var MarathonEventListener = require("./lib/MarathonEventListener");
+var MarathonEventProxy = require("./lib/MarathonEventProxy");
 
-// The Express app
-var app = express();
+// Helpers
+var helpers = require("./lib/helpers");
+
+// Configuration
+var config = require("./lib/config");
+
+// Instantiate logger
+var logger = helpers.getLogger(null, null, config.logging.level);
 
 // The connection cache object
 var connectionCache = {};
 
+// The Express app
+var app = express();
+
+// Statistics endpoint
+app.get("/stats", function(req, res) {
+    var connectionCount = Object.getOwnPropertyNames(connectionCache).length;
+    if (connectionCount > 0) {
+        var stats = {
+            connectionCount: connectionCount,
+            connections: {}
+        };
+        Object.getOwnPropertyNames(connectionCache).forEach(function (connectionId) {
+            stats.connections[connectionId] = connectionCache[connectionId].stats
+        });
+        res.json(stats);
+    } else {
+        res.json({
+            connectionCount: connectionCount
+        })
+    }
+});
+
+app.get("/health", function (req, res) {
+    res.status(200).send();
+});
+
+app.get("/showEndpoint", function (req, res) {
+    res.json({
+        endpoint: "http://" + config.application.host + ":" + config.application.port + config.application.path
+    });
+});
+
+
 // Start Express server
-var server = app.listen(8080, function (err) {
+var server = app.listen(config.application.port, config.application.host, function (err) {
     if(err) throw err;
-    console.log("server ready on http://localhost:8080")
+    logger.info("SSE server ready on http://" + config.application.host + ":" + config.application.port)
 });
 
 // Start Server Sent Events server
-var sse = new SSE(server, { path: "/events" });
+var sse = new SSE(server, { path: config.application.path });
 
-//
+// Handle connections
 sse.on("connection", function (connection) {
 
     var connectionId = crypto.randomBytes(16).toString("hex");
     var url = connection.req.url;
     var qs = parse(url, true).query;
-    var allowedEventTypes = ["deployment_info", "deployment_success", "deployment_failed", "deployment_step_success", "deployment_step_failure", "group_change_success", "group_change_failed", "failed_health_check_event", "health_status_changed_event", "unhealthy_task_kill_event"];
+    var allowedEventTypes = config.allowedEventTypes;
     var eventTypes = [];
 
-    console.log("new connection with id " +connectionId);
-    console.log(qs);
+    logger.info("New connection with id " + connectionId);
+    logger.info("Passed event_types are " + qs["event_types"]);
 
     if (qs && qs["event_types"] && qs["event_types"].length > 0) {
         if (qs["event_types"].indexOf(",") > -1) {
@@ -59,15 +98,18 @@ sse.on("connection", function (connection) {
     connectionCache[connectionId] = {
         connection: connection,
         eventTypes : eventTypes,
-        counters: {}
+        stats: {}
     };
 
     // Initialize counters
     eventTypes.forEach(function (eventType) {
-        connectionCache[connectionId].counters[eventType] = 0;
+        connectionCache[connectionId].stats[eventType] = {
+            count: 0,
+            bytes: 0
+        };
     });
 
-    console.log("Main: Active connections: " + Object.getOwnPropertyNames(connectionCache).length);
+    logger.info("Active connections: " + Object.getOwnPropertyNames(connectionCache).length);
 
     var heartbeat = setInterval(function () {
         connectionCache[connectionId].connection.send({
@@ -77,26 +119,24 @@ sse.on("connection", function (connection) {
     }, 1000);
 
     connectionCache[connectionId].connection.on("close", function () {
-        console.log("Main: Closing connection id " + connectionId);
+        logger.info("Main: Closing connection id " + connectionId);
         clearInterval(heartbeat);
         delete connectionCache[connectionId];
-        console.log("Main: Active connections: " + Object.getOwnPropertyNames(connectionCache).length);
+        logger.info("Main: Active connections: " + Object.getOwnPropertyNames(connectionCache).length);
     });
 });
 
 // Define options
 var options = {
-    marathonUrl: process.env.MARATHON_HOST || "master.mesos",
-    marathonPort: process.env.MARATHON_PORT || 8080,
-    marathonProtocol: process.env.MARATHON_PROTOCOL || "http",
-    logging: {
-        level: process.env.LOG_LEVEL || "info"
-    },
+    marathonHost: config.marathon.host,
+    marathonPort: config.marathon.port,
+    marathonProtocol: config.marathon.protocol,
+    logger: logger,
     connections: connectionCache
 };
 
 // Create event listener
-var mel = new MarathonEventListener(options);
+var mel = new MarathonEventProxy(options);
 
 // Report connection
 mel.on("connected", function (timestamp) {
